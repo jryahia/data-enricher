@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Enricher - AI Enrichment Pipeline</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a; color: #e2e8f0; min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 2rem; color: #38bdf8; margin-bottom: 0.5rem; }
+        p.subtitle { color: #94a3b8; margin-bottom: 2rem; }
+        .card {
+            background: #1e293b; border-radius: 12px; padding: 1.5rem;
+            margin-bottom: 1.5rem; border: 1px solid #334155;
+        }
+        .card h2 { color: #38bdf8; font-size: 1.25rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500; }
+        input, select, textarea {
+            width: 100%; padding: 0.75rem; border-radius: 8px;
+            border: 1px solid #475569; background: #0f172a;
+            color: #e2e8f0; font-size: 0.9rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+        textarea { font-family: monospace; resize: vertical; min-height: 80px; }
+        .btn {
+            padding: 0.75rem 1.5rem; border: none; border-radius: 8px;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #38bdf8; color: #0f172a; }
+        .btn-primary:hover { background: #7dd3fc; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        .btn-secondary:hover { background: #475569; }
+        .status-bar {
+            background: #0f172a; border-radius: 8px; padding: 1rem;
+            margin-top: 1rem; display: none;
+        }
+        .status-bar.active { display: block; }
+        .progress {
+            height: 8px; background: #334155; border-radius: 4px;
+            margin: 0.5rem 0; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: #38bdf8; border-radius: 4px;
+            width: 0%; transition: width 0.3s;
+        }
+        .result-link { color: #38bdf8; text-decoration: underline; cursor: pointer; }
+        .help { font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; }
+        .row { display: flex; gap: 1rem; }
+        .row > * { flex: 1; }
+        @media (max-width: 600px) { .row { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Data Enricher</h1>
+        <p class="subtitle">Upload a file and let AI enrich every row with classifications, descriptions, sentiment analysis, and more.</p>
+
+        <div class="card">
+            <h2>Upload & Enrich</h2>
+            <form id="enrichForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Choose File (CSV, JSON, TXT)</label>
+                    <input type="file" id="file" name="file" accept=".csv,.json,.txt" required>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="enrichment_type">Enrichment Type</label>
+                        <select id="enrichment_type" name="enrichment_type">
+                            <option value="classify">Classify</option>
+                            <option value="describe">Describe</option>
+                            <option value="sentiment">Sentiment</option>
+                            <option value="extract">Extract Entities</option>
+                            <option value="classify,describe,sentiment">All (Classify + Describe + Sentiment)</option>
+                            <option value="custom">Custom Prompt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="output_format">Output Format</label>
+                        <select id="output_format" name="output_format">
+                            <option value="csv">CSV</option>
+                            <option value="json">JSON</option>
+                            <option value="xlsx">Excel (XLSX)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="columns">Columns to Enrich (comma-separated, leave blank for auto-detect)</label>
+                    <input type="text" id="columns" name="columns" placeholder="e.g., name, title, description">
+                    <div class="help">Leave empty to auto-detect relevant columns</div>
+                </div>
+
+                <div class="form-group" id="customGroup" style="display:none;">
+                    <label for="custom_prompt">Custom Prompt (use {column} as placeholder)</label>
+                    <textarea id="custom_prompt" name="custom_prompt" placeholder="Classify this {name} as a type of business..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="batch_size">Batch Size</label>
+                        <input type="number" id="batch_size" name="batch_size" value="10" min="1" max="100">
+                    </div>
+                    <div style="display:flex;align-items:flex-end;">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">🚀 Enrich Data</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="status-bar" id="statusBar">
+                <p id="statusMessage">Processing...</p>
+                <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+                <p id="statusDetail" style="font-size:0.85rem;color:#94a3b8;"></p>
+            </div>
+        </div>
+
+        <div class="card" id="resultCard" style="display:none;">
+            <h2>✅ Enrichment Complete</h2>
+            <p id="resultMessage"></p>
+            <p><a id="downloadLink" class="result-link">⬇ Download Enriched File</a></p>
+        </div>
+    </div>
+
+    <script>
+        const customSelect = document.getElementById('enrichment_type');
+        const customGroup = document.getElementById('customGroup');
+        customSelect.addEventListener('change', () => {
+            customGroup.style.display = customSelect.value === 'custom' ? 'block' : 'none';
+        });
+
+        document.getElementById('enrichForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submitBtn');
+            const statusBar = document.getElementById('statusBar');
+            const statusMsg = document.getElementById('statusMessage');
+            const progressFill = document.getElementById('progressFill');
+            const statusDetail = document.getElementById('statusDetail');
+            const resultCard = document.getElementById('resultCard');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Uploading...';
+            statusBar.classList.add('active');
+            statusMsg.textContent = 'Uploading file and starting enrichment...';
+            progressFill.style.width = '10%';
+
+            try {
+                const resp = await fetch('/enrich', { method: 'POST', body: formData });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.detail || 'Upload failed');
+
+                const jobId = data.job_id;
+                statusMsg.textContent = `Job ${jobId} started. Waiting for completion...`;
+                progressFill.style.width = '20%';
+
+                // Poll for completion
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const statusResp = await fetch(`/jobs/${jobId}`);
+                        const status = await statusResp.json();
+                        const pct = status.total_rows > 0
+                            ? Math.round((status.processed_rows / status.total_rows) * 80) + 10
+                            : 10;
+                        progressFill.style.width = Math.min(pct, 90) + '%';
+                        statusDetail.textContent = `${status.processed_rows}/${status.total_rows} rows processed, ${status.failed_rows} failed`;
+
+                        if (status.status === 'completed') {
+                            clearInterval(pollInterval);
+                            progressFill.style.width = '100%';
+                            statusMsg.textContent = '✅ Enrichment complete!';
+                            resultCard.style.display = 'block';
+                            document.getElementById('resultMessage').textContent =
+                                `Processed ${status.processed_rows} rows successfully.`;
+                            document.getElementById('downloadLink').onclick = () => {
+                                window.location.href = `/jobs/${jobId}/download`;
+                            };
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = '🚀 Enrich Data';
+                        } else if (status.status === 'failed') {
+                            clearInterval(pollInterval);
+                            statusMsg.textContent = `❌ Failed: ${status.error || 'Unknown error'}`;
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = '🚀 Enrich Data';
+                        }
+                    } catch (err) {
+                        // Continue polling
+                    }
+                }, 2000);
+
+            } catch (err) {
+                statusMsg.textContent = `❌ Error: ${err.message}`;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Enrich Data';
+            }
+        });
+    </script>
+</body>
+</html>

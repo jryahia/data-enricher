@@ -1,0 +1,12 @@
+[
+  {"title": "Wireless Bluetooth Headphones", "category": "Electronics", "price": 79.99, "rating": 4.5},
+  {"title": "Organic Green Tea Collection", "category": "Food & Beverage", "price": 24.99, "rating": 4.8},
+  {"title": "Ergonomic Office Chair Pro", "category": "Furniture", "price": 349.99, "rating": 4.2},
+  {"title": "Smart Fitness Tracker Watch", "category": "Electronics", "price": 129.99, "rating": 4.6},
+  {"title": "Professional Sketching Set", "category": "Arts & Crafts", "price": 39.99, "rating": 4.4},
+  {"title": "Eco-Friendly Water Bottle", "category": "Lifestyle", "price": 19.99, "rating": 4.7},
+  {"title": "Noise-Canceling Earbuds Pro", "category": "Electronics", "price": 199.99, "rating": 4.3},
+  {"title": "Yoga Mat Premium Extra Thick", "category": "Sports", "price": 44.99, "rating": 4.9},
+  {"title": "Portable Bluetooth Speaker", "category": "Electronics", "price": 59.99, "rating": 4.1},
+  {"title": "Organic Cotton Bed Sheet Set", "category": "Home & Living", "price": 89.99, "rating": 4.5}
+]
