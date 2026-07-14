@@ -7,11 +7,14 @@ Usage:
 """
 import argparse
 import asyncio
+import logging
 import sys
 import os
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+logger = logging.getLogger(__name__)
 
 from src.core.reader import read_file
 from src.core.enricher import Enricher
@@ -100,22 +103,22 @@ Examples:
 
     # Validate file
     if not os.path.exists(args.file):
-        print(f"❌ Error: File not found: {args.file}", file=sys.stderr)
+        logger.error("File not found: %s", args.file)
         sys.exit(1)
 
     # Read data
     try:
         rows = read_file(args.file)
     except Exception as e:
-        print(f"❌ Error reading file: {e}", file=sys.stderr)
+        logger.error("Error reading file: %s", e)
         sys.exit(1)
 
     if not rows:
-        print("❌ Error: No data rows found in file", file=sys.stderr)
+        logger.error("No data rows found in file")
         sys.exit(1)
 
     headers = list(rows[0].keys())
-    print(f"📄 Loaded {len(rows)} rows with columns: {', '.join(headers)}")
+    logger.info("Loaded %d rows with columns: %s", len(rows), ", ".join(headers))
 
     # Determine enrichment types
     enrichment_types = []
@@ -123,7 +126,7 @@ Examples:
         enrichment_types = [e.strip() for e in args.enrich.split(",")]
     else:
         enrichment_types = guess_enrichment_type(headers)
-        print(f"🔍 Auto-detected enrichment types: {', '.join(enrichment_types)}")
+        logger.info("Auto-detected enrichment types: %s", ", ".join(enrichment_types))
 
     # Determine columns
     columns = []
@@ -140,7 +143,7 @@ Examples:
         columns = list(dict.fromkeys(columns))  # deduplicate, preserve order
         if not columns:
             columns = [headers[0]]
-        print(f"🔍 Auto-detected columns: {', '.join(columns)}")
+        logger.info("Auto-detected columns: %s", ", ".join(columns))
 
     # Setup LLM config
     llm_config = LLMConfig(
@@ -153,15 +156,18 @@ Examples:
 
     # Estimate cost
     estimate = enricher.estimate_total_cost(rows, enrichment_types, columns)
-    print(f"\n💰 Cost Estimate:")
-    print(f"   Rows: {estimate['rows']}")
-    print(f"   Enrichments: {estimate['enrichments']} (per row)")
-    print(f"   Est. input tokens: {estimate['estimated_input_tokens']:,}")
-    print(f"   Est. output tokens: {estimate['estimated_output_tokens']:,}")
-    print(f"   Est. total cost: ${estimate['estimated_total_cost']:.6f}")
+    logger.info(
+        "Cost Estimate — Rows: %d, Enrichments: %d (per row), "
+        "Est. input tokens: %s, Est. output tokens: %s, Est. total cost: $%.6f",
+        estimate["rows"],
+        estimate["enrichments"],
+        f"{estimate['estimated_input_tokens']:,}",
+        f"{estimate['estimated_output_tokens']:,}",
+        estimate["estimated_total_cost"],
+    )
 
     if args.dry_run:
-        print("\n✅ Dry run complete. No enrichment performed.")
+        logger.info("Dry run complete. No enrichment performed.")
         return
 
     # Determine output path
@@ -179,7 +185,7 @@ Examples:
     out_fmt = out_ext if out_ext in ("csv", "json", "xlsx") else "csv"
 
     # Run enrichment
-    print(f"\n🔄 Running enrichment...")
+    logger.info("Running enrichment...")
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -202,16 +208,22 @@ Examples:
     success_count = len([r for r in enriched if "_error" not in r])
     fail_count = len([r for r in enriched if "_error" in r])
 
-    print(f"\n✅ Enrichment complete!")
-    print(f"   Successfully enriched: {success_count} rows")
-    if fail_count:
-        print(f"   Failed: {fail_count} rows")
-    print(f"   Output: {os.path.abspath(output_file)}")
+    logger.info(
+        "Enrichment complete! Successfully enriched: %d rows, Failed: %d rows, Output: %s",
+        success_count,
+        fail_count,
+        os.path.abspath(output_file),
+    )
 
     # Show usage summary
     usage = enricher.llm.get_usage()
     if usage["total_tokens"] > 0:
-        print(f"   Tokens used: {usage['total_tokens']:,} ({usage['prompt_tokens']:,} prompt + {usage['completion_tokens']:,} completion)")
+        logger.info(
+            "Tokens used: %s (%s prompt + %s completion)",
+            f"{usage['total_tokens']:,}",
+            f"{usage['prompt_tokens']:,}",
+            f"{usage['completion_tokens']:,}",
+        )
 
 
 if __name__ == "__main__":

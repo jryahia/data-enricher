@@ -1,9 +1,12 @@
 """Batch processing logic for parallel row enrichment."""
 import asyncio
+import logging
 import time
 import sys
 from typing import List, Dict, Any, Callable, Optional
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -72,7 +75,7 @@ async def process_batch(
                 results[idx] = {**row, "_error": str(e)}
                 progress.update(success=False, error=str(e))
         if show_progress and (progress.completed + progress.failed) % 10 == 0:
-            print(f"\r{progress}", end="", file=sys.stderr, flush=True)
+            logger.debug("Batch progress: %s", progress)
 
     # Create tasks for all rows
     tasks = [process_one(i, row) for i, row in enumerate(rows)]
@@ -82,10 +85,10 @@ async def process_batch(
         batch = tasks[i : i + max_concurrency]
         await asyncio.gather(*batch)
         if show_progress:
-            print(f"\r{progress}", end="", file=sys.stderr, flush=True)
+            logger.debug("Batch progress: %s", progress)
 
     if show_progress:
-        print(f"\r{progress}", file=sys.stderr)
+        logger.debug("Batch progress final: %s", progress)
 
     return results
 

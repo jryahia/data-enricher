@@ -8,8 +8,11 @@ Usage:
 import os
 import sys
 import argparse
+import logging
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+logger = logging.getLogger(__name__)
 
 import uvicorn
 from src.server.api import app
@@ -22,6 +25,6 @@ if __name__ == "__main__":
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
     args = parser.parse_args()
 
-    print(f"🚀 Data Enricher API starting on http://{args.host}:{args.port}")
-    print(f"   Open http://localhost:{args.port} for the web UI")
+    logger.info("Data Enricher API starting on http://%s:%s", args.host, args.port)
+    logger.info("Open http://localhost:%s for the web UI", args.port)
     uvicorn.run("src.server.api:app", host=args.host, port=args.port, reload=args.reload)
