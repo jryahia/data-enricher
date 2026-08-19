@@ -55,4 +55,4 @@ if __name__ == "__main__":
     test_detect_text_columns()
     test_guess_enrichment_type()
     test_estimate_cost()
-    print("✅ All enricher tests passed!")
+    print(" All enricher tests passed!")

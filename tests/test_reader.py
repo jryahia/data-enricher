@@ -78,4 +78,4 @@ if __name__ == "__main__":
     test_read_text()
     test_read_file_auto()
     test_read_from_string()
-    print("✅ All reader tests passed!")
+    print(" All reader tests passed!")

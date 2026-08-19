@@ -53,4 +53,4 @@ if __name__ == "__main__":
     test_export_csv()
     test_export_json()
     test_export_auto()
-    print("✅ All exporter tests passed!")
+    print(" All exporter tests passed!")
