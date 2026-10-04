@@ -1,5 +1,23 @@
 # AI Data Enricher
 
+**Enrichment pipeline that reads CSV, JSON or text files, enriches each row with AI (classify, describe, sentiment, extract, translate) and exports CSV, JSON or Excel.**
+
+![Python](https://img.shields.io/badge/Python-161b22?style=for-the-badge&labelColor=161b22&color=161b22) ![FastAPI](https://img.shields.io/badge/FastAPI-161b22?style=for-the-badge&labelColor=161b22&color=161b22) ![OpenAI](https://img.shields.io/badge/OpenAI-161b22?style=for-the-badge&labelColor=161b22&color=161b22) ![pandas](https://img.shields.io/badge/pandas-161b22?style=for-the-badge&labelColor=161b22&color=161b22) ![Docker](https://img.shields.io/badge/Docker-161b22?style=for-the-badge&labelColor=161b22&color=161b22)
+
+```mermaid
+flowchart LR
+    S0["CSV / JSON / text upload"]
+    S1["Column detection"]
+    S2["Batched AI enrichment"]
+    S3["Progress + cost estimate"]
+    S4["CSV / JSON / Excel export"]
+    S0 --> S1 --> S2 --> S3 --> S4
+```
+
+## Problem it solves
+
+Enriching thousands of rows by hand, or with one-off scripts, is slow and costs are unpredictable. This pipeline batches the work, estimates cost before running and exports clean files.
+
 A powerful AI-powered data enrichment pipeline that reads CSV/JSON/text files, enriches each row using AI (classification, description, sentiment analysis, entity extraction, custom prompts), and exports the enriched data.
 
 ## Features
